@@ -112,6 +112,8 @@ app.get("/auth/google/innovault",
     res.redirect("/dashboard");
   });
 
+
+
 app.get("/login", function(req, res){
   res.render("login");
 });
@@ -164,6 +166,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     const cid = ipfsResponse.data.Hash;
 
     res.status(200).send(`File uploaded to IPFS. CID: ${cid}`);
+    
   } catch (error) {
     console.error('Error uploading file to IPFS:', error);
     res.status(500).send('Internal Server Error');
