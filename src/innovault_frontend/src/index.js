@@ -1,13 +1,18 @@
 // innovault_frontend/index.js
 
-// Example: Navigate to Register Page
-document.getElementById('registerLink').addEventListener('click', () => {
-    window.location.href = 'http://localhost:3000/register';
+document.addEventListener('DOMContentLoaded', () => {
+    // Navigate to Register Page
+    document.getElementById('registerLink').addEventListener('click', () => {
+        window.location.href = 'http://localhost:3000/register';
+    });
+
+    // Navigate to Login Page
+    document.getElementById('loginLink').addEventListener('click', () => {
+        window.location.href = 'http://localhost:3000/login';
+    });
+
+    // Other frontend logic goes here
 });
 
-// Example: Navigate to Dashboard Page
-document.getElementById('dashboardLink').addEventListener('click', () => {
-    window.location.href = 'http://localhost:3000/dashboard';
-});
 
 // Other frontend logic goes here

@@ -4,13 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>File Upload Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
   <h1>File Upload Dashboard</h1>
   <form action="/upload" method="post" enctype="multipart/form-data">
     <label for="file">Select File:</label>
     <input type="file" name="file" id="file" accept=".pdf" required>
-    <button type="submit">Upload File</button>
+    <button type="submit"> Upload File</button>
+    <hr/>
+  </form>
+    <a href="/logout"><button>Logout</button></a>
+    <hr/>
+  <form action="/search" method="get">
+    <label for="search">Search: </label>
+    <input type="text" id="search" name="search" placeholder="Enter CID">
+    <button type="submit" style="font-size:24px"><i class="fa fa-search"></i></button>
   </form>
 </body>
 </html>

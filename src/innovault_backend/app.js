@@ -22,13 +22,32 @@ const FormData = require('form-data');
 
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png|pdf|txt|mp3)$/)) {
+      return cb(new Error('Only JPG, JPEG, PDF, txt, MP3 and PNG files are allowed.'));
+    }
+    cb(null, true);
+  }
+});
+
 // const ipfs = ipfsClient('http://localhost:5001');
 const ipfsApiEndpoint = 'http://localhost:5001/api/v0/add';
 
+app.use('', express.static(path.join(__dirname, '../src/innovault_frontend/src'), {
+  setHeaders: (res, filepath) => {
+      if (path.extname(filepath) === '.js') {
+          res.setHeader('Content-Type', 'text/javascript');
+      }
+  }
+}));
+
 app.use(express.static("public"));
+
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({
   extended: true
@@ -72,21 +91,8 @@ passport.deserializeUser(async function(id, done) {
     }
   });
   
-// passport.use(new GoogleStrategy({
-//     clientID: process.env.CLIENT_ID,
-//     clientSecret: process.env.CLIENT_SECRET,
-//     callbackURL: "http://localhost:3000/auth/google/innovault",
-//     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
-//   },
-//   function(accessToken, refreshToken, profile, cb) {
-//     console.log(profile);
 
-//     User.findOrCreate({ googleId: profile.id }, function (err, user) {
-//       return cb(err, user);
-//     });
-//   }
-// ));
-passport.use(new GoogleStrategy({
+passport.use("google", new GoogleStrategy({
   clientID: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
   callbackURL: "http://localhost:3000/auth/google/innovault",
@@ -102,16 +108,19 @@ function(accessToken, refreshToken, profile, cb) {
 }));
 
 app.get("/auth/google",
-  passport.authenticate('google', { scope: ["profile"] })
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 app.get("/auth/google/innovault",
-  passport.authenticate('google', { failureRedirect: "/register" }),
+  passport.authenticate("google", { failureRedirect: "/register" }),
   function(req, res) {
-    // Successful authentication, redirect to secrets.
+    // Successful authentication, redirect to dashboard.
     res.redirect("/dashboard");
   });
 
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'innovault_frontend', 'src', 'index.html'));
+});
 
 
 app.get("/login", function(req, res){
@@ -125,22 +134,7 @@ app.get("/register", function(req, res){
 app.get("/dashboard", function(req, res){
     res.render("dashboard");
   });
-// app.post('/upload', upload.single('pdfFile'), async (req, res) => {
-//     try {
-//         // Access the file content from req.file.buffer
-//         const pdfContent = req.file.buffer;
 
-//         // Call the Motoko canister method for handling file uploads
-//         const ipfsResponse = await uploadToIPFS(pdfContent);
-
-//         // Handle the IPFS response and send a response back to the client
-//         res.status(200).json({ ipfsResponse });
-//     } catch (error) {
-//         // Handle errors
-//         console.error('Error handling file upload:', error);
-//         res.status(500).json({ error: 'Internal Server Error' });
-//     }
-// });
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
@@ -165,7 +159,14 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     // Access CID from IPFS API response
     const cid = ipfsResponse.data.Hash;
 
-    res.status(200).send(`File uploaded to IPFS. CID: ${cid}`);
+    // Construct HTML response with back button
+    const responseHtml = `
+      <p>File uploaded to IPFS. CID: ${cid}</p>
+      <button onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+    `;
+    
+    // Send HTML response with back button
+    res.status(200).send(responseHtml);
     
   } catch (error) {
     console.error('Error uploading file to IPFS:', error);
@@ -175,15 +176,21 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
 app.get("/submit", function(req, res){
   if (req.isAuthenticated()){
-    res.render("dashboard");
+    res.render("/dashboard");
   } else {
     res.redirect("/login");
   }
 });
 
 app.get("/logout", function(req, res){
-  req.logout();
-  res.redirect("/");
+  req.logout((err) => {
+    if (err) {
+        console.error(err);
+        return res.status(500).send("Internal Server Error");
+    }else{
+        res.redirect("/");
+    }
+ });
 });
 
 app.post("/register", function(req, res){
@@ -226,6 +233,6 @@ app.post("/login", function(req, res){
 
 
 
-app.listen(3000, function() {
-  console.log("Server started on port 3000.");
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
